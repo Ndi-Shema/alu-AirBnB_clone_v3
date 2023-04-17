@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 """
-Contains the class DBStorage
-"""
+This module contains the DBStorage class which interacts with a MySQL database."""
 
 import models
 from models.amenity import Amenity
@@ -26,59 +25,103 @@ class DBStorage:
     __session = None
 
     def __init__(self):
-        """Instantiate a DBStorage object"""
+        """
+        Instantiate a DBStorage object.
+        """
+
         HBNB_MYSQL_USER = getenv('HBNB_MYSQL_USER')
         HBNB_MYSQL_PWD = getenv('HBNB_MYSQL_PWD')
         HBNB_MYSQL_HOST = getenv('HBNB_MYSQL_HOST')
         HBNB_MYSQL_DB = getenv('HBNB_MYSQL_DB')
         HBNB_ENV = getenv('HBNB_ENV')
+
         self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.
                                       format(HBNB_MYSQL_USER,
                                              HBNB_MYSQL_PWD,
                                              HBNB_MYSQL_HOST,
                                              HBNB_MYSQL_DB))
+
         if HBNB_ENV == "test":
             Base.metadata.drop_all(self.__engine)
 
     def all(self, cls=None):
-        """query on the current database session"""
+        """
+        Queries the current database session for all objects.
+
+        If a class is specified, it only returns objects of that class.
+
+        Returns:
+            A dictionary containing all objects in the session.
+        """
+
         new_dict = {}
+
         for clss in classes:
             if cls is None or cls is classes[clss] or cls is clss:
                 objs = self.__session.query(classes[clss]).all()
                 for obj in objs:
                     key = obj.__class__.__name__ + '.' + obj.id
                     new_dict[key] = obj
-        return (new_dict)
+
+        return new_dict
 
     def new(self, obj):
-        """add the object to the current database session"""
+        """
+        Adds the given object to the current database session.
+
+        Args:
+            obj: The object to add.
+        """
+
         self.__session.add(obj)
 
     def save(self):
-        """commit all changes of the current database session"""
+        """
+        Commits all changes of the current database session.
+        """
+
         self.__session.commit()
 
     def delete(self, obj=None):
-        """delete from the current database session obj if not None"""
+        """
+        Deletes the given object from the current database session.
+
+        Args:
+            obj: The object to delete.
+        """
+
         if obj is not None:
             self.__session.delete(obj)
 
     def reload(self):
-        """reloads data from the database"""
+        """
+        Reloads data from the database.
+        """
+
         Base.metadata.create_all(self.__engine)
         sess_factory = sessionmaker(bind=self.__engine, expire_on_commit=False)
         Session = scoped_session(sess_factory)
         self.__session = Session
 
     def close(self):
-        """call remove() method on the private session attribute"""
+        """
+        Calls the remove() method on the private session attribute.
+        """
+
         self.__session.remove()
 
     def get(self, cls, id):
         """
-        Returns the object based on the class and its ID, or None if not found
+        Returns the object based on the class and its ID, or None if not found.
+
+        Args:
+            cls: The class of the object to get.
+            id: The ID of the object to get.
+
+        Returns:
+            The object with the given class and ID, or None if not found.
         """
+
         if cls is None or id is None:
             return None
         else:
@@ -90,7 +133,7 @@ class DBStorage:
 
     def count(self, cls=None):
         """
-        Returns the number of objects in storage matching the given class.
-        If no class is passed, returns the count of all objects in storage.
+        provides the quantity of objects in storage that match the specified class.
+        returns the number of all objects in storage if no class is passed.
         """
         return len(self.all(cls))
