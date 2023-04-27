@@ -1,17 +1,20 @@
 #!/usr/bin/python3
-"""Module"""
+
+"""This module implements Flask API endpoints for managing State objects."""
+
 from api.v1.views import app_views
-from flask import jsonify
+from flask import jsonify, make_response, abort, request
 from models import storage
-from flask import make_response, abort, request
 from models.state import State
 
 
 @app_views.route('/states', methods=['GET'], strict_slashes=False)
 def all_states():
     """
-    Retrieves the list of all State objects: GET /api/v1/states
-    In JSON format
+    Retrieve a list of all State objects.
+
+    HTTP request: GET /api/v1/states
+    Response: JSON format
     """
     states = storage.all(State).values()
     list_states = []
@@ -22,17 +25,26 @@ def all_states():
 
 @app_views.route('/states/<state_id>', methods=['GET'], strict_slashes=False)
 def states_id(state_id):
-    """Retrieves a State object: GET /api/v1/states/<state_id>"""
+    """
+    Retrieve a specific State object by its ID.
+
+    HTTP request: GET /api/v1/states/<state_id>
+    Response: JSON format
+    """
     state = storage.get(State, state_id)
     if state is None:
         abort(404)
     return jsonify(state.to_dict())
 
 
-@app_views.route('/states/<state_id>',
-                 methods=['DELETE'], strict_slashes=False)
+@app_views.route('/states/<state_id>', methods=['DELETE'], strict_slashes=False)
 def delete_state(state_id):
-    """DELETE state based on id"""
+    """
+    Delete a State object by its ID.
+
+    HTTP request: DELETE /api/v1/states/<state_id>
+    Response: empty JSON object with status code 200
+    """
     state = storage.get(State, state_id)
     if state is None:
         abort(404)
@@ -43,7 +55,12 @@ def delete_state(state_id):
 
 @app_views.route('/states', methods=['POST'], strict_slashes=False)
 def create_state():
-    """Returns the new State with the status code 201"""
+    """
+    Create a new State object.
+
+    HTTP request: POST /api/v1/states
+    Response: JSON format with new State object and status code 201
+    """
     if not request.get_json():
         return make_response(jsonify({"error": "Not a JSON"}), 400)
     if "name" not in request.get_json():
