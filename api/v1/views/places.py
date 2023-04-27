@@ -1,21 +1,31 @@
 #!/usr/bin/python3
-"""Module"""
-from api.v1.views import app_views
-from flask import jsonify
+"""
+This module defines API routes related to the Place object.
+"""
+
+from flask import jsonify, make_response, abort, request
 from models import storage
-from flask import make_response, abort, request
-from models.place import Place
 from models.city import City
+from models.place import Place
 from models.user import User
+from api.v1.views import app_views
 
 
-@app_views.route("/cities/<city_id>/places", methods=['GET'],
-                 strict_slashes=False)
+@app_views.route("/cities/<city_id>/places", methods=['GET'], strict_slashes=False)
 def places_of_city(city_id):
-    """Retrieves the list of all Place objects of a City"""
+    """
+    Retrieves the list of all Place objects associated with a given City ID.
+
+    Args:
+        city_id (str): The City ID to retrieve the associated Place objects.
+
+    Returns:
+        A JSON representation of a list of all Place objects.
+    """
     city = storage.get(City, city_id)
     if city is None:
         abort(404)
+
     list_places = []
     for place in city.places:
         list_places.append(place.to_dict())
@@ -25,7 +35,15 @@ def places_of_city(city_id):
 
 @app_views.route('/places/<place_id>', methods=['GET'], strict_slashes=False)
 def places_id(place_id):
-    """Retrieves a Place object"""
+    """
+    Retrieves a specific Place object associated with a given Place ID.
+
+    Args:
+        place_id (str): The Place ID to retrieve.
+
+    Returns:
+        A JSON representation of a specific Place object.
+    """
     place = storage.get(Place, place_id)
     if place is None:
         abort(404)
@@ -33,33 +51,48 @@ def places_id(place_id):
     return jsonify(place.to_dict())
 
 
-@app_views.route("/places/<place_id>", methods=['DELETE'],
-                 strict_slashes=False)
+@app_views.route("/places/<place_id>", methods=['DELETE'], strict_slashes=False)
 def delete_place(place_id):
-    """Deletes a Place object"""
+    """
+    Deletes a specific Place object associated with a given Place ID.
+
+    Args:
+        place_id (str): The Place ID to delete.
+
+    Returns:
+        An empty JSON response with status code 200.
+    """
     place = storage.get(Place, place_id)
     if place is None:
         abort(404)
+
     storage.delete(place)
     storage.save()
     return make_response(jsonify({}), 200)
 
 
-@app_views.route("/cities/<city_id>/places", methods=['POST'],
-                 strict_slashes=False)
+@app_views.route("/cities/<city_id>/places", methods=['POST'], strict_slashes=False)
 def create_place(city_id):
-    """Creates a Place"""
+    """
+    Creates a new Place object associated with a given City ID.
+
+    Args:
+        city_id (str): The City ID to associate with the new Place object.
+
+    Returns:
+        A JSON representation of the newly created Place object with status code 201.
+    """
     city = storage.get(City, city_id)
     if city is None:
         abort(404)
 
-    if not request.get_json():
+    req_body = request.get_json()
+    if not req_body:
         return make_response(jsonify({"error": "Not a JSON"}), 400)
 
-    if "user_id" not in request.get_json():
+    if "user_id" not in req_body:
         return make_response(jsonify({"error": "Missing user_id"}), 400)
 
-    req_body = request.get_json()
     user_id = req_body.get("user_id")
     user = storage.get(User, user_id)
     if user is None:
@@ -74,6 +107,7 @@ def create_place(city_id):
     storage.new(object)
     storage.save()
     return make_response(jsonify(object.to_dict()), 201)
+
 
 
 @app_views.route("/places/<place_id>", methods=['PUT'], strict_slashes=False)
